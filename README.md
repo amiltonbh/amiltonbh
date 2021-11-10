@@ -1,19 +1,8 @@
 ### Olá! Eu sou o Amilton de Jesus 👋
-👨 Empreendedor
 
-Hipnólogo Ericksoniano
-
-Master Coach
-
-Ex(Miltar do exército e Polia Militar de Minas Gerais)
-
-Palestrante (treinador)
-
-Dev Linux
-
-Dev Criptomoeda 
-
-Dev Bot mercado financeiro
+Dev Linux,
+Dev Criptomoeda, 
+Dev Bot mercado financeiro.
 
 [![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white
 )](https://www.instagram.com/amiltondejesus7/)
