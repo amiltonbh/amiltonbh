@@ -1,0 +1,15 @@
+# Esta pasta contém scripts que usam credenciais de PRODUÇÃO do Mercado Pago
+# e devem ser executados apenas via linha de comando (SSH/cron), nunca via
+# navegador. Bloqueia qualquer acesso HTTP à pasta como camada extra de
+# proteção, independente do PHP estar sendo interpretado ou não pelo servidor.
+
+# Apache 2.4+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 (fallback)
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

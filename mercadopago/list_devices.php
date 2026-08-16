@@ -19,6 +19,13 @@
 
 declare(strict_types=1);
 
+// Este script mexe com credenciais de PRODUÇÃO: nunca deve ser executado via
+// navegador/URL pública. Só roda via linha de comando (SSH/terminal/cron).
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Acesso negado: este script só pode ser executado via linha de comando (CLI).');
+}
+
 const API_BASE = 'https://api.mercadopago.com';
 
 $configFile = __DIR__ . '/config.php';
