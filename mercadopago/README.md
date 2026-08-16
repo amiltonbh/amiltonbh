@@ -17,12 +17,26 @@ Lista as maquininhas (Point) ativas na conta e monta uma tabela cruzando:
 
 ### Uso
 
+**Opção 1 — arquivo de config (recomendado pra rodar via FTP no servidor):**
+
+```bash
+cp config.example.php config.php
+# edite config.php e cole seu token na constante MP_ACCESS_TOKEN_INLINE
+php list_devices.php
+```
+
+`config.php` está no `.gitignore` — fica só no servidor, nunca é commitado/pushado.
+Esse repositório é **público**, então o token real nunca pode ir para o Git.
+
+**Opção 2 — variável de ambiente:**
+
 ```bash
 export MP_ACCESS_TOKEN="APP_USR-xxxxxxxxxxxxxxxx"
 php list_devices.php
-
-# ou exportando também para CSV
-php list_devices.php --csv=maquinas.csv
 ```
 
-O token nunca deve ser commitado — é lido sempre da variável de ambiente `MP_ACCESS_TOKEN`.
+**Exportar também em CSV:**
+
+```bash
+php list_devices.php --csv=maquinas.csv
+```

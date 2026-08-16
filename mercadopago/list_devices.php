@@ -7,22 +7,30 @@
  *   - GET /stores/{store_id}                (loja vinculada ao POS)
  *
  * Uso:
- *   MP_ACCESS_TOKEN="APP_USR-xxxxx" php list_devices.php
- *   MP_ACCESS_TOKEN="APP_USR-xxxxx" php list_devices.php --csv=maquinas.csv
+ *   1) Copie config.example.php para config.php e cole seu token lá dentro, OU
+ *   2) MP_ACCESS_TOKEN="APP_USR-xxxxx" php list_devices.php
  *
- * O access token de PRODUÇÃO deve começar com "APP_USR-". Nunca cometa
- * o token no repositório: passe sempre via variável de ambiente.
+ *   php list_devices.php --csv=maquinas.csv
+ *
+ * O access token de PRODUÇÃO deve começar com "APP_USR-". O arquivo
+ * config.php está no .gitignore e NUNCA deve ser commitado/pushado — este
+ * repositório é público, então o token nunca pode ir para o Git.
  */
 
 declare(strict_types=1);
 
 const API_BASE = 'https://api.mercadopago.com';
 
+$configFile = __DIR__ . '/config.php';
+if (is_file($configFile)) {
+    require $configFile;
+}
+
 function getAccessToken(): string
 {
-    $token = getenv('MP_ACCESS_TOKEN');
+    $token = defined('MP_ACCESS_TOKEN_INLINE') ? MP_ACCESS_TOKEN_INLINE : getenv('MP_ACCESS_TOKEN');
     if (!$token) {
-        fwrite(STDERR, "Erro: defina a variável de ambiente MP_ACCESS_TOKEN com seu access token de produção.\n");
+        fwrite(STDERR, "Erro: defina o token em mercadopago/config.php (veja config.example.php) ou na variável de ambiente MP_ACCESS_TOKEN.\n");
         exit(1);
     }
     if (!str_starts_with($token, 'APP_USR-')) {
