@@ -1,0 +1,14 @@
+{
+  "name": "aqualita-pulse-antplus-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ponte local: le o dongle ANT+ USB (RC406) e retransmite a FC das pulseiras HW807 via WebSocket para o painel Aqualita Pulse.",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "ant-plus-next": "^0.1.0",
+    "ws": "^8.18.0"
+  }
+}

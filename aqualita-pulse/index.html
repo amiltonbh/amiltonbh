@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aqualita Pulse — Painel Gamificado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#03050D;
+  --bg-1:#070C1F;
+  --panel:rgba(10,16,38,.55);
+  --line:rgba(0,229,255,.16);
+  --ink:#E8F4FF;
+  --ink-dim:#5F718F;
+  --cyan:#00E5FF;
+  --magenta:#FF2E88;
+  --gold:#FFD166;
+  --z0:#3A4460;
+  --z1:#5E6E8F;
+  --z2:#00C2FF;
+  --z3:#00FF9C;
+  --z4:#FFB020;
+  --z5:#FF3B5C;
+  --chamfer:14px;
+  --cols:6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Chakra Petch',system-ui,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1100px 650px at 82% -12%, rgba(0,229,255,.10), transparent 60%),
+    radial-gradient(900px 560px at 4% 112%, rgba(255,46,136,.08), transparent 55%),
+    linear-gradient(165deg,var(--bg-1),var(--bg-0) 65%);
+  overflow:hidden;display:flex;flex-direction:column;
+  padding:1vh 1vw;gap:.9vh;cursor:default;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+  background-size:3.5vw 3.5vw;
+  mask-image:radial-gradient(90% 90% at 50% 45%, #000 40%, transparent 100%);
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:60;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 4px);
+}
+header,main,footer{position:relative;z-index:1}
+.chamf{
+  background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(12px);
+  clip-path:polygon(var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer));
+}
+
+/* ============ HEADER ============ */
+header{display:flex;align-items:center;gap:1.2vw;padding:1vh 1.4vw;flex:0 0 auto}
+.brand h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2vw;letter-spacing:.16em;line-height:1}
+.brand h1 .px{color:var(--cyan);text-shadow:0 0 14px rgba(0,229,255,.55)}
+.brand h1 .sep{color:var(--magenta);text-shadow:0 0 12px rgba(255,46,136,.6)}
+.live{display:flex;align-items:center;gap:.4vw;font-size:.68vw;letter-spacing:.3em;color:var(--ink-dim);border:1px solid var(--line);padding:.35vh .7vw}
+.live .d{width:.5vw;height:.5vw;border-radius:50%;background:var(--z5);box-shadow:0 0 10px var(--z5);animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.class-name{font-size:.9vw;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-dim);border-left:1px solid var(--line);padding-left:1.2vw}
+.spacer{flex:1}
+.zone-summary{display:flex;gap:.45vw}
+.zchip{
+  display:flex;align-items:center;gap:.35vw;border:1px solid var(--line);padding:.35vh .6vw;
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  background:rgba(255,255,255,.02);
+}
+.zchip .bar{width:.26vw;height:1.3vh}
+.zchip .n{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.25vw;min-width:1vw;text-align:center;font-variant-numeric:tabular-nums}
+.stat{text-align:right;border-left:1px solid var(--line);padding-left:1.2vw}
+.stat .lbl{font-size:.6vw;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-dim)}
+.stat .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.85vw;line-height:1.05;font-variant-numeric:tabular-nums;text-shadow:0 0 16px rgba(0,229,255,.25)}
+
+.gear-btn{
+  position:relative;flex:0 0 auto;width:2.4vw;height:2.4vw;border:1px solid var(--line);background:rgba(255,255,255,.02);
+  color:var(--ink);cursor:pointer;font-size:1.1vw;display:flex;align-items:center;justify-content:center;
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition:border-color .2s,color .2s;
+}
+.gear-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.gear-btn .cnt{
+  position:absolute;top:-.6vh;right:-.6vw;min-width:1.4vw;height:1.4vw;border-radius:50%;background:var(--magenta);
+  color:#fff;font-size:.62vw;font-weight:700;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 8px rgba(255,46,136,.7);font-family:'Rajdhani',sans-serif;
+}
+
+/* ============ GRID ============ */
+main{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--cols,6),1fr);grid-auto-rows:1fr;gap:.8vh .7vw;transition:all .4s ease}
+.card{position:relative;padding:.6vh .7vw .5vh;display:flex;flex-direction:column;overflow:hidden}
+.card .corner{position:absolute;width:.9vw;height:.9vw;pointer-events:none;transition:border-color .6s}
+.card .c-tl{top:4px;left:4px;border-top:2px solid var(--zc,var(--z0));border-left:2px solid var(--zc,var(--z0))}
+.card .c-br{bottom:4px;right:4px;border-bottom:2px solid var(--zc,var(--z0));border-right:2px solid var(--zc,var(--z0))}
+.card .name{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:.4vw;
+  font-weight:600;font-size:.78vw;letter-spacing:.08em;text-transform:uppercase;
+}
+.card .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .pwr{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95vw;color:var(--gold);
+  text-shadow:0 0 10px rgba(255,209,102,.5);white-space:nowrap;font-variant-numeric:tabular-nums;flex:0 0 auto;
+}
+.card .rm{
+  flex:0 0 auto;background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.85vw;line-height:1;
+  opacity:0;transition:opacity .2s,color .2s;
+}
+.card:hover .rm{opacity:1}
+.card .rm:hover{color:var(--z5)}
+.mid{flex:1;min-height:0;display:flex;align-items:center;gap:.6vw;width:100%}
+/* anel + avatar */
+.ava-ring{height:96%;aspect-ratio:1;position:relative;flex:0 0 auto}
+.ring{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring .track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:6.5}
+.ring .arc{
+  fill:none;stroke:var(--zc,var(--z0));stroke-width:6.5;stroke-linecap:round;
+  transition:stroke-dashoffset .9s ease, stroke .6s;
+  filter:drop-shadow(0 0 6px var(--zc,transparent));
+}
+.avatar{
+  position:absolute;inset:12%;
+  animation:bob calc(var(--beat,1s)*2) ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3%)}}
+.avatar svg{width:100%;height:100%;overflow:visible}
+/* dados */
+.data{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bpm{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2.2vw;line-height:.95;
+  font-variant-numeric:tabular-nums;text-shadow:0 0 18px var(--zc-soft,transparent);
+  animation:beat var(--beat,1s) ease-in-out infinite;
+}
+@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.09)}24%{transform:scale(1)}}
+.bpm-unit{font-size:.52vw;letter-spacing:.3em;color:var(--ink-dim);text-transform:uppercase}
+.pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.15vw;color:var(--zc,var(--ink-dim));font-variant-numeric:tabular-nums;margin-top:.3vh}
+.card .foot{width:100%;display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(255,255,255,.06);padding-top:.35vh}
+.zlabel{font-size:.55vw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim)}
+.kcal{font-size:.62vw;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.card.offline{opacity:.32;filter:saturate(.15)}
+.card.offline .bpm{animation:none;text-shadow:none;color:var(--ink-dim)}
+.card.offline .avatar{animation:none}
+.card.waiting .zlabel::after{content:' · aguardando sinal'}
+
+/* estado vazio */
+.empty-card{
+  grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.2vh;color:var(--ink-dim);text-align:center;
+}
+.empty-card .ico{font-size:3vw;filter:drop-shadow(0 0 14px rgba(0,229,255,.35))}
+.empty-card .t1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.4vw;letter-spacing:.1em;color:var(--ink)}
+.empty-card .t2{font-size:.85vw;max-width:32vw;line-height:1.5}
+.empty-card button{
+  margin-top:.6vh;padding:.9vh 1.6vw;background:rgba(0,229,255,.08);border:1px solid var(--cyan);color:var(--cyan);
+  font-family:'Chakra Petch';font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.75vw;cursor:pointer;
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.empty-card button:hover{background:rgba(0,229,255,.16)}
+
+/* ===== AVATAR: partes e humores ===== */
+.avatar .p{transform-box:fill-box;transform-origin:center}
+.avatar .eye{animation:blinkEyes 4.6s infinite}
+@keyframes blinkEyes{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.avatar .brow{opacity:0;transition:opacity .4s}
+.avatar .mouth{display:none}
+.avatar .sweat{opacity:0}
+.avatar .fire{opacity:0}
+.avatar .fire path{transform-box:fill-box;transform-origin:50% 100%}
+.avatar .ant-dot{fill:var(--zc,var(--acc))}
+
+.avatar[data-mood="z0"] .m-calm{display:block}
+.avatar[data-mood="z0"] .eye{transform:scaleY(.4);animation:none}
+.avatar[data-mood="z1"] .m-calm{display:block}
+.avatar[data-mood="z2"] .m-smile{display:block}
+.avatar[data-mood="z3"] .m-smile{display:block}
+.avatar[data-mood="z3"] .brow{opacity:1}
+.avatar[data-mood="z4"] .m-grit{display:block}
+.avatar[data-mood="z4"] .brow{opacity:1}
+.avatar[data-mood="z4"] .sweat{opacity:1;animation:drop 1.1s ease-in infinite}
+@keyframes drop{
+  0%{transform:translateY(0);opacity:0}
+  15%{opacity:1}
+  100%{transform:translateY(16px);opacity:0}
+}
+.avatar[data-mood="z5"] .m-shout{display:block}
+.avatar[data-mood="z5"] .brow{opacity:1}
+.avatar[data-mood="z5"] .eye{fill:var(--z5);filter:drop-shadow(0 0 4px var(--z5));animation:none}
+.avatar[data-mood="z5"] .head-g{animation:shake .28s linear infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.2px)}75%{transform:translateX(1.2px)}}
+.avatar[data-mood="z5"] .fire{opacity:1}
+.avatar[data-mood="z5"] .fire path{animation:flick .5s ease-in-out infinite alternate}
+.avatar[data-mood="z5"] .fire path:nth-child(2){animation-duration:.38s}
+.avatar[data-mood="z5"] .fire path:nth-child(3){animation-duration:.62s}
+@keyframes flick{from{transform:scaleY(.75)}to{transform:scaleY(1.15)}}
+
+.shock{
+  position:absolute;inset:0;pointer-events:none;border:2px solid var(--zc,var(--cyan));
+  clip-path:polygon(var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer));
+  animation:shock .7s ease-out forwards;
+}
+@keyframes shock{0%{opacity:1;transform:scale(.92)}100%{opacity:0;transform:scale(1.12)}}
+.float-pwr{
+  position:absolute;top:14%;right:6%;pointer-events:none;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.4vw;color:var(--gold);
+  text-shadow:0 0 12px rgba(255,209,102,.8);animation:floatUp 1.4s ease-out forwards;z-index:3;
+}
+@keyframes floatUp{
+  0%{opacity:0;transform:translateY(.6vh) scale(.7)}
+  20%{opacity:1;transform:translateY(0) scale(1.15)}
+  100%{opacity:0;transform:translateY(-3.2vh) scale(1)}
+}
+
+/* ============ FOOTER ============ */
+footer{flex:0 0 7.2vh;display:flex;gap:.8vw}
+.toastbox{flex:0 0 24vw;position:relative;overflow:hidden;display:flex;align-items:center;padding:0 1vw}
+.toast{
+  position:absolute;left:1vw;right:1vw;display:flex;align-items:center;gap:.6vw;
+  font-size:.85vw;letter-spacing:.06em;
+  animation:toastIn .45s cubic-bezier(.2,.9,.3,1.2) forwards;
+}
+.toast.out{animation:toastOut .4s ease-in forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(-2vw)}to{opacity:1;transform:none}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateX(2vw)}}
+.toast .ico{font-size:1.3vw;filter:drop-shadow(0 0 8px rgba(255,176,32,.7))}
+.toast b{color:var(--cyan)}
+.toast .tag{font-size:.6vw;letter-spacing:.25em;color:var(--ink-dim);text-transform:uppercase;display:block}
+.teambox{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.6vh;padding:0 1.2vw}
+.teamtop{display:flex;justify-content:space-between;align-items:baseline}
+.teamtop .lbl{font-size:.65vw;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-dim)}
+.teamtop .goal{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1vw;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(255,209,102,.4)}
+.teambar{position:relative;height:1.6vh;background:rgba(255,255,255,.06);clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);overflow:hidden}
+.teamfill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold));
+  background-size:200% 100%;animation:flow 3s linear infinite;
+  transition:width 1s ease;box-shadow:0 0 14px rgba(0,229,255,.5);
+}
+@keyframes flow{from{background-position:0 0}to{background-position:200% 0}}
+.podium{flex:0 0 24vw;display:flex;align-items:center;gap:.8vw;padding:0 1vw}
+.podium .plbl{font-size:.6vw;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-dim);writing-mode:vertical-rl;transform:rotate(180deg)}
+.podium-slots{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.35vh}
+.pslot{display:flex;align-items:center;gap:.5vw;font-size:.8vw;letter-spacing:.05em;transition:transform .5s ease}
+.pslot .medal{font-size:1vw;width:1.3vw;text-align:center}
+.pslot .pava{width:1.6vw;height:1.6vw;flex:0 0 auto}
+.pslot .pava svg{width:100%;height:100%}
+.pslot .pnm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-weight:600}
+.pslot .ppwr{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1vw;color:var(--gold);font-variant-numeric:tabular-nums}
+.pslot.swap{animation:swapPulse .6s ease}
+@keyframes swapPulse{0%{transform:translateX(.6vw);opacity:.3}100%{transform:none;opacity:1}}
+.pslot:first-child .pnm{color:var(--gold);text-shadow:0 0 10px rgba(255,209,102,.4)}
+
+/* ============ CELEBRAÇÃO ============ */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:55}
+.banner{
+  position:fixed;left:50%;top:42%;transform:translate(-50%,-50%) scale(.8);
+  z-index:56;pointer-events:none;text-align:center;padding:2.5vh 4vw;opacity:0;
+  animation:bannerIn 3.6s ease forwards;
+}
+.banner .big{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:3.6vw;letter-spacing:.2em;
+  color:var(--gold);text-shadow:0 0 30px rgba(255,209,102,.8),0 0 60px rgba(255,46,136,.5);
+}
+.banner .sub{font-size:1vw;letter-spacing:.4em;text-transform:uppercase;color:var(--ink)}
+@keyframes bannerIn{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}
+  10%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+  16%{transform:translate(-50%,-50%) scale(1)}
+  80%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-52%) scale(1)}
+}
+
+/* ============ MODAL DE CADASTRO ============ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:80;background:rgba(3,5,13,.75);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:4vh 2vw;
+}
+.modal-overlay.open{display:flex}
+.modal{width:min(760px,92vw);max-height:88vh;display:flex;flex-direction:column;padding:2.4vh 2.2vw;gap:1.6vh;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.5vw;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)}
+.modal-close{background:none;border:1px solid var(--line);color:var(--ink);width:2vw;height:2vw;cursor:pointer;font-size:1vw}
+.modal-close:hover{border-color:var(--z5);color:var(--z5)}
+.modal-body{overflow-y:auto;display:flex;flex-direction:column;gap:1.8vh;padding-right:.3vw}
+.modal-body::-webkit-scrollbar{width:6px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--line)}
+
+.device-list{display:flex;flex-direction:column;gap:.6vh}
+.device-row{
+  display:flex;align-items:center;gap:.7vw;padding:.9vh 1vw;border:1px solid var(--line);background:rgba(255,255,255,.02);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.device-row .dot{width:.6vw;height:.6vw;border-radius:50%;background:var(--ink-dim);flex:0 0 auto}
+.device-row.online .dot{background:var(--z3);box-shadow:0 0 8px var(--z3)}
+.device-row.waiting .dot{background:var(--z4);box-shadow:0 0 8px var(--z4);animation:blink 1.4s infinite}
+.device-row .info{flex:1;min-width:0}
+.device-row .rn{font-weight:600;letter-spacing:.03em}
+.device-row .rd{font-size:.65vw;color:var(--ink-dim);letter-spacing:.05em}
+.device-row .tag{
+  font-size:.58vw;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--line);padding:.2vh .5vw;color:var(--ink-dim);flex:0 0 auto;
+}
+.device-row .del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:.9vw;flex:0 0 auto}
+.device-row .del:hover{color:var(--z5)}
+.empty-hint{font-size:.75vw;color:var(--ink-dim);text-align:center;padding:1vh 0}
+
+.section-title{font-size:.7vw;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-dim);border-bottom:1px solid var(--line);padding-bottom:.6vh;margin-bottom:.4vh}
+.hint{font-size:.68vw;color:var(--ink-dim);line-height:1.5}
+
+.device-form{display:flex;flex-direction:column;gap:.7vh}
+.device-form .row{display:flex;gap:.6vw}
+.device-form input,.device-form select{
+  flex:1;min-width:0;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--ink);
+  padding:.9vh .8vw;font-family:'Chakra Petch';font-size:.8vw;outline:none;
+}
+.device-form input:focus,.device-form select:focus{border-color:var(--cyan)}
+.device-form input::placeholder{color:var(--ink-dim)}
+.btn{
+  padding:.9vh 1.2vw;border:1px solid var(--cyan);background:rgba(0,229,255,.08);color:var(--cyan);
+  font-family:'Chakra Petch';font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.75vw;cursor:pointer;
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.btn:hover{background:rgba(0,229,255,.16)}
+.btn.magenta{border-color:var(--magenta);color:var(--magenta);background:rgba(255,46,136,.08)}
+.btn.magenta:hover{background:rgba(255,46,136,.16)}
+.btn.ghost{border-color:var(--line);color:var(--ink-dim);background:transparent}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+@media (prefers-reduced-motion:reduce){
+  .bpm,.live .d,.teamfill,.avatar,.avatar *{animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<header class="chamf">
+  <div class="brand"><h1>AQUALITA<span class="sep"> // </span><span class="px">PULSE</span></h1></div>
+  <div class="live"><span class="d"></span>LIVE</div>
+  <div class="class-name" id="className">Aquacross · Turma da Noite</div>
+  <div class="spacer"></div>
+  <div class="zone-summary" id="zoneSummary"></div>
+  <div class="stat"><div class="lbl">Média</div><div class="val" id="avgBpm">--</div></div>
+  <div class="stat"><div class="lbl">Sessão</div><div class="val" id="clock">00:00</div></div>
+  <button class="gear-btn" id="gearBtn" title="Cadastrar dispositivos">⚙<span class="cnt" id="gearCnt">0</span></button>
+</header>
+
+<main id="grid"></main>
+
+<footer>
+  <div class="toastbox chamf" id="toastbox"></div>
+  <div class="teambox chamf">
+    <div class="teamtop">
+      <span class="lbl">⚡ Energia da turma</span>
+      <span class="goal"><span id="teamNow">0</span> / <span id="teamGoal">250</span> pulsos</span>
+    </div>
+    <div class="teambar"><div class="teamfill" id="teamFill"></div></div>
+  </div>
+  <div class="podium chamf">
+    <span class="plbl">Pódio</span>
+    <div class="podium-slots" id="podium"></div>
+  </div>
+</footer>
+
+<canvas id="fx"></canvas>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal chamf">
+    <div class="modal-head">
+      <h2>Cadastro de dispositivos</h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div>
+        <div class="section-title">Dispositivos cadastrados (<span id="listCount">0</span>)</div>
+        <div class="device-list" id="deviceList"></div>
+        <div class="empty-hint" id="emptyHint">Nenhum dispositivo cadastrado ainda.</div>
+      </div>
+
+      <div>
+        <div class="section-title">📡 Parear via Bluetooth — HW702A</div>
+        <p class="hint">A HW702A transmite em BLE. Clique em parear, escolha a pulseira na lista do navegador (Chrome/Edge no Mac) e ela passa a enviar FC em tempo real, sem precisar de servidor.</p>
+        <form class="device-form" id="bleForm">
+          <div class="row">
+            <input type="text" id="bleNome" placeholder="Nome do aluno" required>
+            <input type="number" id="bleIdade" placeholder="Idade" min="8" max="99" required>
+          </div>
+          <button type="submit" class="btn" id="bleBtn">📡 Parear via Bluetooth</button>
+        </form>
+      </div>
+
+      <div>
+        <div class="section-title">🔌 Cadastro manual — HW807 / dongle ANT+ RC406</div>
+        <p class="hint">A HW807 fala apenas ANT+ e o dongle RC406 é lido por USB, algo que o navegador não acessa diretamente. Cadastre aqui com o ID ANT+ do dispositivo (impresso na pulseira ou mostrado ao parear no coletor); os dados chegam via uma pequena ponte local que envia para <code>ws://localhost:8080</code> no formato <code>{"deviceId":"...","bpm":123}</code> — veja o script incluso na pasta <code>antplus-bridge/</code>.</p>
+        <form class="device-form" id="antForm">
+          <div class="row">
+            <input type="text" id="antNome" placeholder="Nome do aluno" required>
+            <input type="number" id="antIdade" placeholder="Idade" min="8" max="99" required>
+          </div>
+          <div class="row">
+            <input type="text" id="antId" placeholder="ID ANT+ do dispositivo (ex: 41123)" required>
+            <button type="submit" class="btn magenta">+ Cadastrar</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <div class="section-title">Modo demonstração</div>
+        <p class="hint">Sem dispositivos por perto? Preencha a tela com alunos simulados para testar o painel.</p>
+        <button class="btn ghost" id="demoBtn">🎬 Ativar demonstração (8 alunos)</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   AQUALITA PULSE — v5 (cadastro de dispositivos + grid dinâmico)
+   Cada aluno ganha um avatar procedural único (gerado do deviceId)
+   que reage à zona de FC: sonolento -> sorrindo -> focado ->
+   suando -> em chamas.
+
+   Como os dados chegam:
+   - HW702A (BLE ANT+): pareamento direto pelo navegador via Web
+     Bluetooth (Heart Rate Service 0x180D). Funciona hoje no
+     Chrome/Edge do Mac, sem servidor nenhum.
+   - HW807 (ANT+ puro) + dongle RC406 (USB ANT+): o navegador não
+     acessa USB/ANT+ diretamente, então uma ponte local (Node.js,
+     em antplus-bridge/) lê o dongle e retransmite via WebSocket em
+     ws://localhost:8080 como {"deviceId":"...","bpm":123}.
+   - Qualquer deviceId desconhecido que chegar por WS também aparece
+     sozinho no painel (auto-cadastro), pronto para você renomear em ⚙.
+   ================================================================ */
+const CONFIG = {
+  wsUrl: 'ws://localhost:8080',
+  className: 'Aquacross · Turma da Noite',
+  offlineAfterMs: 12000,
+  weightDefaultKg: 70,
+  teamMilestone: 250,
+  pwrPerMin: { z4:1, z5:2 },
+  storageKey: 'aqualitaPulseRoster.v1'
+};
+
+const ZONES = [
+  { key:'z0', min:0,  max:50,  label:'Repouso',  color:'var(--z0)', soft:'rgba(58,68,96,.3)'   },
+  { key:'z1', min:50, max:60,  label:'Leve',     color:'var(--z1)', soft:'rgba(94,110,143,.35)'},
+  { key:'z2', min:60, max:70,  label:'Base',     color:'var(--z2)', soft:'rgba(0,194,255,.4)'  },
+  { key:'z3', min:70, max:80,  label:'Aeróbico', color:'var(--z3)', soft:'rgba(0,255,156,.4)'  },
+  { key:'z4', min:80, max:90,  label:'Intenso',  color:'var(--z4)', soft:'rgba(255,176,32,.45)'},
+  { key:'z5', min:90, max:999, label:'Máximo',   color:'var(--z5)', soft:'rgba(255,59,92,.5)'  },
+];
+const SUMMARY_ZONES = ['z1','z2','z3','z4','z5'];
+const ZONE_INDEX = Object.fromEntries(ZONES.map((z,i)=>[z.key,i]));
+
+const students = new Map();
+const bleDevices = new Map();
+const startTime = Date.now();
+let teamPwr = 0, nextMilestone = CONFIG.teamMilestone;
+let demoActive = false, demoTimer = null;
+
+/* ================= PERSISTÊNCIA DO CADASTRO ================= */
+function loadRoster(){
+  try{ return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || []; }
+  catch(_){ return []; }
+}
+function saveRoster(){
+  const roster = [...students.values()]
+    .filter(s => !s.demo)
+    .map(s => ({ deviceId:s.deviceId, nome:s.nome, idade:s.idade, tipo:s.tipo }));
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(roster));
+}
+
+/* ================= AVATAR PROCEDURAL ================= */
+const ACCENTS = ['#00E5FF','#FF2E88','#FFD166','#00FF9C','#A78BFA','#FF8A3D'];
+
+function hashSeed(str){
+  let h = 0;
+  for (let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+
+function avatarSVG(seed){
+  const h = hashSeed(seed);
+  const headType = h % 3;
+  const antType  = (h >> 2) % 3;
+  const earType  = (h >> 4) % 2;
+  const acc      = ACCENTS[(h >> 6) % ACCENTS.length];
+  const blinkDelay = ((h >> 8) % 40) / 10;
+
+  let head;
+  if (headType === 0)      head = '<rect x="24" y="20" width="52" height="58" rx="24" class="shell"/>';
+  else if (headType === 1) head = '<polygon points="50,16 78,32 78,66 50,82 22,66 22,32" class="shell"/>';
+  else                     head = '<rect x="26" y="16" width="48" height="64" rx="16" class="shell"/>';
+
+  let ant = '';
+  if (antType === 1) ant = '<line x1="50" y1="20" x2="50" y2="8" class="wire"/><circle cx="50" cy="6" r="3.5" class="ant-dot"/>';
+  if (antType === 2) ant = '<polygon points="34,22 30,8 40,18" class="fin"/><polygon points="66,22 70,8 60,18" class="fin"/>';
+
+  const ears = earType === 0
+    ? '<rect x="16" y="42" width="8" height="16" rx="3" class="pod"/><rect x="76" y="42" width="8" height="16" rx="3" class="pod"/>'
+    : '<circle cx="21" cy="50" r="6" class="pod"/><circle cx="79" cy="50" r="6" class="pod"/>';
+
+  return (
+  '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'+
+    '<style>'+
+      '.shell{fill:rgba(13,20,45,.9);stroke:'+acc+';stroke-width:2.5}'+
+      '.pod{fill:rgba(255,255,255,.08);stroke:'+acc+';stroke-width:1.5}'+
+      '.fin{fill:'+acc+';opacity:.85}'+
+      '.wire{stroke:'+acc+';stroke-width:2}'+
+      '.visor{fill:rgba(255,255,255,.05)}'+
+      '.eye{fill:#E8F4FF}'+
+      '.brow{stroke:#E8F4FF;stroke-width:2.5;stroke-linecap:round}'+
+      '.mo{stroke:#E8F4FF;stroke-width:2.5;stroke-linecap:round;fill:none}'+
+      '.grit-fill{fill:#E8F4FF}'+
+      '.shout-fill{fill:#0A1026;stroke:#E8F4FF;stroke-width:2}'+
+      '.sw{fill:#7FD8FF}'+
+      '.fl1{fill:#FF3B5C}.fl2{fill:#FFB020}.fl3{fill:#FFD166}'+
+    '</style>'+
+    '<g class="fire">'+
+      '<path class="p fl1" d="M38 18 Q36 8 42 4 Q42 12 46 14 Q44 20 38 18Z"/>'+
+      '<path class="p fl2" d="M50 16 Q48 4 54 0 Q54 10 58 12 Q56 18 50 16Z"/>'+
+      '<path class="p fl3" d="M62 18 Q62 10 66 6 Q66 12 70 15 Q66 20 62 18Z"/>'+
+    '</g>'+
+    '<g class="head-g p">'+
+      ant + ears + head +
+      '<rect x="30" y="36" width="40" height="18" rx="8" class="visor"/>'+
+      '<ellipse class="eye p" cx="40" cy="45" rx="4.5" ry="5.5" style="animation-delay:'+blinkDelay+'s"/>'+
+      '<ellipse class="eye p" cx="60" cy="45" rx="4.5" ry="5.5" style="animation-delay:'+blinkDelay+'s"/>'+
+      '<line class="brow" x1="33" y1="36" x2="45" y2="39"/>'+
+      '<line class="brow" x1="67" y1="36" x2="55" y2="39"/>'+
+      '<line class="mouth m-calm mo" x1="42" y1="64" x2="58" y2="64"/>'+
+      '<path class="mouth m-smile mo" d="M41 62 Q50 70 59 62"/>'+
+      '<g class="mouth m-grit">'+
+        '<rect x="40" y="60" width="20" height="7" rx="2" class="grit-fill"/>'+
+        '<line x1="45" y1="60" x2="45" y2="67" stroke="#0A1026" stroke-width="1.4"/>'+
+        '<line x1="50" y1="60" x2="50" y2="67" stroke="#0A1026" stroke-width="1.4"/>'+
+        '<line x1="55" y1="60" x2="55" y2="67" stroke="#0A1026" stroke-width="1.4"/>'+
+      '</g>'+
+      '<ellipse class="mouth m-shout shout-fill" cx="50" cy="64" rx="7" ry="8"/>'+
+      '<path class="sweat sw p" d="M74 34 q3 4 0 7 q-3 -3 0 -7Z"/>'+
+    '</g>'+
+  '</svg>');
+}
+
+/* ---------------- Simulador (só entra em modo demonstração) ---------------- */
+const SIM_NAMES = ['Ana Paula','Bruno','Camila','Diego','Elisa','Felipe','Gabriela','Heitor'];
+function simProfile(){ return { fitness:.85+Math.random()*.3, effort:.35+Math.random()*.1, noiseSeed:Math.random()*1000 }; }
+function classTargetEffort(m){
+  if (m < 3)  return .55 + m/3*.15;
+  if (m < 33){
+    const b = Math.floor((m-3)/7.5), t = ((m-3)%7.5)/7.5, peak = .84 + b*.03;
+    return t < .6 ? .62 + (peak-.62)*(t/.6) : peak - (peak-.66)*((t-.6)/.4);
+  }
+  return Math.max(.5, .7 - (m-33)*.04);
+}
+function simTick(){
+  const target = classTargetEffort((Date.now()-startTime)/60000);
+  students.forEach(s=>{
+    if (!s.demo) return;
+    const p = s.sim;
+    p.effort += (target/p.fitness - p.effort)*.08;
+    const noise = Math.sin(Date.now()/1400 + p.noiseSeed)*.012 + (Math.random()-.5)*.01;
+    ingest(s.deviceId, Math.round(s.fcmax * Math.min(1.02, Math.max(.42, p.effort+noise))));
+  });
+}
+function toggleDemo(on){
+  demoActive = on;
+  if (on){
+    SIM_NAMES.forEach((nome,i)=>{
+      const deviceId = 'demo-'+String(i+1).padStart(2,'0');
+      if (students.has(deviceId)) return;
+      const s = registerStudent({ deviceId, nome, idade:18+Math.floor(Math.random()*42), tipo:'demo' });
+      s.demo = true; s.sim = simProfile();
+      buildCard(s);
+    });
+    if (!demoTimer) demoTimer = setInterval(simTick, 1000);
+  } else {
+    [...students.values()].filter(s=>s.demo).forEach(s=>removeStudent(s.deviceId));
+    if (demoTimer){ clearInterval(demoTimer); demoTimer = null; }
+  }
+  layoutGrid();
+}
+
+/* ---------------- Núcleo ---------------- */
+function registerStudent({deviceId, nome, idade, tipo}){
+  const s = { deviceId, nome, idade, tipo:tipo||'ant', fcmax:220-idade, bpm:0, kcal:0,
+              pwr:0, pwrShown:0, zoneIdx:0, lastSeen:0, demo:false };
+  students.set(deviceId, s);
+  return s;
+}
+function zoneFor(pct){ return ZONES.find(z=>pct>=z.min && pct<z.max) || ZONES[0]; }
+function ingest(deviceId, bpm){
+  let s = students.get(deviceId);
+  if (!s){
+    s = registerStudent({deviceId, nome:'Dispositivo '+deviceId, idade:35, tipo:'ant'});
+    buildCard(s);
+    saveRoster();
+    layoutGrid();
+    toast('🔗','Novo dispositivo conectado: <b>'+deviceId+'</b> — renomeie em ⚙','Auto-cadastro');
+  }
+  const now = Date.now();
+  if (s.lastSeen){
+    const mins = (now-s.lastSeen)/60000;
+    const kcalMin = (0.6309*bpm + 0.1988*CONFIG.weightDefaultKg + 0.2017*s.idade - 55.0969)/4.184;
+    if (kcalMin > 0) s.kcal += kcalMin*mins;
+    const zk = zoneFor(bpm/s.fcmax*100).key;
+    if (CONFIG.pwrPerMin[zk]) s.pwr += CONFIG.pwrPerMin[zk]*mins;
+  }
+  s.bpm = bpm; s.lastSeen = now;
+}
+function removeStudent(deviceId){
+  const s = students.get(deviceId);
+  if (!s) return;
+  if (bleDevices.has(deviceId)){
+    const dev = bleDevices.get(deviceId);
+    try{ if (dev.gatt && dev.gatt.connected) dev.gatt.disconnect(); }catch(_){}
+    bleDevices.delete(deviceId);
+  }
+  if (s.el && s.el.root) s.el.root.remove();
+  students.delete(deviceId);
+  if (!s.demo) saveRoster();
+  layoutGrid();
+  renderDeviceList();
+}
+
+/* ---------------- Grid dinâmico: menos gente, avatar maior ---------------- */
+const grid = document.getElementById('grid');
+let emptyCardEl = null;
+function layoutGrid(){
+  const n = students.size;
+  if (n === 0){
+    if (!emptyCardEl){
+      emptyCardEl = document.createElement('div');
+      emptyCardEl.className = 'empty-card';
+      emptyCardEl.innerHTML =
+        '<div class="ico">⌚</div>'+
+        '<div class="t1">Nenhum dispositivo cadastrado</div>'+
+        '<div class="t2">Clique no ⚙ no canto superior direito para parear uma HW702A por Bluetooth ou cadastrar uma HW807 (via dongle RC406).</div>'+
+        '<button id="emptyCta">⚙ Cadastrar dispositivos</button>';
+      grid.appendChild(emptyCardEl);
+      emptyCardEl.querySelector('#emptyCta').addEventListener('click', openModal);
+    }
+  } else if (emptyCardEl){
+    emptyCardEl.remove();
+    emptyCardEl = null;
+  }
+  const cols = Math.max(1, Math.min(6, Math.ceil(Math.sqrt(Math.max(n,1)))));
+  grid.style.setProperty('--cols', cols);
+  document.getElementById('gearCnt').textContent = n;
+}
+
+/* ---------------- Toasts ---------------- */
+const toastbox = document.getElementById('toastbox');
+const toastQueue = [];
+let toastBusy = false;
+function toast(ico, html, tag){
+  if (toastQueue.length > 4) return;
+  toastQueue.push({ico, html, tag});
+  runToasts();
+}
+function runToasts(){
+  if (toastBusy || !toastQueue.length) return;
+  toastBusy = true;
+  const {ico, html, tag} = toastQueue.shift();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<span class="ico">'+ico+'</span><div><span class="tag">'+tag+'</span>'+html+'</div>';
+  toastbox.appendChild(el);
+  setTimeout(()=>{
+    el.classList.add('out');
+    setTimeout(()=>{ el.remove(); toastBusy=false; runToasts(); }, 420);
+  }, 3600);
+}
+
+/* ---------------- Confete ---------------- */
+const fx = document.getElementById('fx');
+const ctx = fx.getContext('2d');
+let particles = [];
+function sizeFx(){ fx.width = innerWidth; fx.height = innerHeight; }
+addEventListener('resize', sizeFx); sizeFx();
+const FX_COLORS = ['#00E5FF','#FF2E88','#FFD166','#00FF9C','#FFB020'];
+let fxRunning = false;
+function burst(n){
+  for (let i=0;i<n;i++){
+    particles.push({
+      x: fx.width/2 + (Math.random()-.5)*fx.width*.5, y: fx.height*.45,
+      vx:(Math.random()-.5)*9, vy:-(4+Math.random()*9),
+      g:.22+Math.random()*.1, r:3+Math.random()*4,
+      c:FX_COLORS[Math.floor(Math.random()*FX_COLORS.length)],
+      rot:Math.random()*Math.PI, vr:(Math.random()-.5)*.3, life:1
+    });
+  }
+  if (!fxRunning) fxLoop();
+}
+function fxLoop(){
+  fxRunning = true;
+  ctx.clearRect(0,0,fx.width,fx.height);
+  particles = particles.filter(p=>p.life>0);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.rot+=p.vr; p.life-=.008;
+    ctx.save(); ctx.globalAlpha=Math.max(0,p.life);
+    ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.fillStyle=p.c; ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+    ctx.restore();
+  });
+  if (particles.length) requestAnimationFrame(fxLoop);
+  else { fxRunning=false; ctx.clearRect(0,0,fx.width,fx.height); }
+}
+function celebrate(title, sub){
+  const b = document.createElement('div');
+  b.className = 'banner';
+  b.innerHTML = '<div class="big">'+title+'</div><div class="sub">'+sub+'</div>';
+  document.body.appendChild(b);
+  setTimeout(()=>b.remove(), 3700);
+  burst(160);
+}
+
+/* ---------------- Render dos cards ---------------- */
+const R = 46, CIRC = 2*Math.PI*R;
+
+function buildCard(s){
+  const el = document.createElement('div');
+  el.className = 'card chamf offline';
+  el.innerHTML =
+    '<span class="corner c-tl"></span><span class="corner c-br"></span>'+
+    '<div class="name"><span class="nm"></span><span class="pwr">⚡0</span><button class="rm" title="Remover">✕</button></div>'+
+    '<div class="mid">'+
+      '<div class="ava-ring">'+
+        '<svg class="ring" viewBox="0 0 100 100">'+
+          '<circle class="track" cx="50" cy="50" r="'+R+'"/>'+
+          '<circle class="arc" cx="50" cy="50" r="'+R+'" stroke-dasharray="'+CIRC+'" stroke-dashoffset="'+CIRC+'"/>'+
+        '</svg>'+
+        '<div class="avatar" data-mood="z0">'+avatarSVG(s.deviceId)+'</div>'+
+      '</div>'+
+      '<div class="data"><div class="bpm">--</div><div class="bpm-unit">bpm</div><div class="pct">--%</div></div>'+
+    '</div>'+
+    '<div class="foot"><span class="zlabel">--</span><span class="kcal">0 kcal</span></div>';
+  el.querySelector('.nm').textContent = s.nome;
+  el.querySelector('.rm').addEventListener('click', () => removeStudent(s.deviceId));
+  grid.appendChild(el);
+  s.el = {
+    root:el, pwr:el.querySelector('.pwr'), arc:el.querySelector('.arc'),
+    avatar:el.querySelector('.avatar'),
+    bpm:el.querySelector('.bpm'), pct:el.querySelector('.pct'),
+    zlabel:el.querySelector('.zlabel'), kcal:el.querySelector('.kcal')
+  };
+}
+
+function shockwave(s){
+  const w = document.createElement('div');
+  w.className = 'shock';
+  s.el.root.appendChild(w);
+  setTimeout(()=>w.remove(), 750);
+}
+function floatPwr(s, amount){
+  const f = document.createElement('div');
+  f.className = 'float-pwr';
+  f.textContent = '+'+amount;
+  s.el.root.appendChild(f);
+  setTimeout(()=>f.remove(), 1450);
+}
+
+const zoneSummaryEl = document.getElementById('zoneSummary');
+const zchipEls = {};
+function buildSummary(){
+  SUMMARY_ZONES.forEach(key=>{
+    const z = ZONES.find(x=>x.key===key);
+    const chip = document.createElement('div');
+    chip.className='zchip';
+    chip.innerHTML = '<span class="bar" style="background:'+z.color+'"></span><span class="n">0</span>';
+    zoneSummaryEl.appendChild(chip);
+    zchipEls[key] = chip.querySelector('.n');
+  });
+}
+
+const podiumEl = document.getElementById('podium');
+const MEDALS = ['🥇','🥈','🥉'];
+let lastPodiumIds = [];
+function renderPodium(top3){
+  const ids = top3.map(t=>t.s.deviceId);
+  const changed = ids.join() !== lastPodiumIds.join();
+  podiumEl.innerHTML = '';
+  top3.forEach((t,i)=>{
+    const slot = document.createElement('div');
+    slot.className = 'pslot' + (changed ? ' swap' : '');
+    slot.innerHTML = '<span class="medal">'+MEDALS[i]+'</span><span class="pava">'+avatarSVG(t.s.deviceId)+'</span><span class="pnm"></span><span class="ppwr">⚡'+Math.floor(t.s.pwr)+'</span>';
+    slot.querySelector('.pnm').textContent = t.s.nome;
+    podiumEl.appendChild(slot);
+  });
+  if (changed && lastPodiumIds.length && ids[0] && ids[0] !== lastPodiumIds[0]){
+    const leader = students.get(ids[0]);
+    if (leader) toast('👑','<b>'+leader.nome+'</b> assumiu a liderança!','Pódio');
+  }
+  lastPodiumIds = ids;
+}
+
+function render(){
+  const now = Date.now();
+  const counts = {z1:0,z2:0,z3:0,z4:0,z5:0};
+  let sum=0, online=0, totalPwr=0;
+  const ranking=[];
+
+  students.forEach(s=>{
+    totalPwr += s.pwr;
+    const off = !s.lastSeen || (now - s.lastSeen) > CONFIG.offlineAfterMs;
+    s.el.root.classList.toggle('offline', off);
+    s.el.root.classList.toggle('waiting', !s.lastSeen);
+    if (off){ s.el.bpm.textContent='--'; s.el.pct.textContent='--%'; return; }
+
+    const pct = Math.round(s.bpm / s.fcmax * 100);
+    const z = zoneFor(pct);
+    const zi = ZONE_INDEX[z.key];
+
+    if (zi > s.zoneIdx){
+      shockwave(s);
+      if (z.key === 'z5') toast('🔥','<b>'+s.nome+'</b> entrou na ZONA MÁXIMA!','Zona');
+    }
+    s.zoneIdx = zi;
+
+    const whole = Math.floor(s.pwr);
+    if (whole > s.pwrShown){
+      floatPwr(s, whole - s.pwrShown);
+      s.pwrShown = whole;
+      if (whole > 0 && whole % 10 === 0) toast('⚡','<b>'+s.nome+'</b> chegou a '+whole+' pulsos!','Marco');
+    }
+
+    s.el.root.style.setProperty('--zc', z.color);
+    s.el.root.style.setProperty('--zc-soft', z.soft);
+    s.el.root.style.setProperty('--beat', (60/Math.max(40,s.bpm)).toFixed(3)+'s');
+    s.el.avatar.dataset.mood = z.key;
+    s.el.arc.style.strokeDashoffset = CIRC * (1 - Math.min(pct,100)/100);
+    s.el.bpm.textContent = s.bpm;
+    s.el.pct.textContent = pct+'%';
+    s.el.zlabel.textContent = z.label;
+    s.el.kcal.textContent = Math.round(s.kcal)+' kcal';
+    s.el.pwr.textContent = '⚡'+whole;
+
+    if (counts[z.key] !== undefined) counts[z.key]++;
+    sum += s.bpm; online++;
+    ranking.push({s, pwr:s.pwr});
+  });
+
+  teamPwr = totalPwr;
+  document.getElementById('teamNow').textContent = Math.floor(teamPwr);
+  document.getElementById('teamGoal').textContent = nextMilestone;
+  const fillPct = Math.min(100, (teamPwr % CONFIG.teamMilestone) / CONFIG.teamMilestone * 100);
+  document.getElementById('teamFill').style.width = (teamPwr >= nextMilestone && teamPwr>0 ? 100 : fillPct) + '%';
+  if (teamPwr >= nextMilestone && teamPwr>0){
+    celebrate('TURMA EM CHAMAS','⚡ '+nextMilestone+' pulsos coletivos alcançados');
+    nextMilestone += CONFIG.teamMilestone;
+  }
+
+  ranking.sort((a,b)=>b.pwr-a.pwr);
+  renderPodium(ranking.slice(0,3));
+
+  SUMMARY_ZONES.forEach(k=>zchipEls[k].textContent=counts[k]);
+  document.getElementById('avgBpm').textContent = online ? Math.round(sum/online) : '--';
+}
+
+function tickClock(){
+  const s = Math.floor((Date.now()-startTime)/1000);
+  document.getElementById('clock').textContent =
+    String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+/* ---------------- WebSocket: ponte ANT+ (HW807 / dongle RC406) ---------------- */
+function connectWS(){
+  try{
+    const ws = new WebSocket(CONFIG.wsUrl);
+    ws.onmessage = e => {
+      try{
+        const msg = JSON.parse(e.data);
+        if (msg.deviceId && typeof msg.bpm === 'number') ingest(String(msg.deviceId), msg.bpm);
+      }catch(_){}
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+    ws.onerror = () => ws.close();
+  }catch(_){ setTimeout(connectWS, 5000); }
+}
+
+/* ---------------- Bluetooth: pareamento direto (HW702A) ---------------- */
+function parseHRValue(value){
+  const flags = value.getUint8(0);
+  const rate16 = flags & 0x1;
+  return rate16 ? value.getUint16(1, true) : value.getUint8(1);
+}
+async function pairBLE(nome, idade){
+  if (!navigator.bluetooth){
+    alert('Este navegador não suporta Web Bluetooth. Use Chrome ou Edge no Mac.');
+    return null;
+  }
+  const device = await navigator.bluetooth.requestDevice({
+    filters: [{ services: ['heart_rate'] }],
+    optionalServices: ['heart_rate']
+  });
+  const deviceId = 'ble-' + device.id;
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService('heart_rate');
+  const char = await service.getCharacteristic('heart_rate_measurement');
+  await char.startNotifications();
+  char.addEventListener('characteristicvaluechanged', e => {
+    ingest(deviceId, parseHRValue(e.target.value));
+  });
+  device.addEventListener('gattserverdisconnected', () => {
+    toast('📴','<b>'+nome+'</b> perdeu a conexão Bluetooth','Aviso');
+  });
+  bleDevices.set(deviceId, device);
+  const s = registerStudent({ deviceId, nome, idade, tipo:'ble' });
+  buildCard(s);
+  saveRoster();
+  layoutGrid();
+  return s;
+}
+
+/* ---------------- Modal de cadastro ---------------- */
+const modalOverlay = document.getElementById('modalOverlay');
+function openModal(){ modalOverlay.classList.add('open'); renderDeviceList(); }
+function closeModal(){ modalOverlay.classList.remove('open'); }
+document.getElementById('gearBtn').addEventListener('click', openModal);
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+function renderDeviceList(){
+  const list = document.getElementById('deviceList');
+  const items = [...students.values()].filter(s => !s.demo);
+  document.getElementById('listCount').textContent = items.length;
+  document.getElementById('emptyHint').style.display = items.length ? 'none' : 'block';
+  list.innerHTML = '';
+  const now = Date.now();
+  items.forEach(s=>{
+    const online = s.lastSeen && (now - s.lastSeen) <= CONFIG.offlineAfterMs;
+    const row = document.createElement('div');
+    row.className = 'device-row ' + (online ? 'online' : (s.lastSeen ? '' : 'waiting'));
+    const tipoLabel = s.tipo === 'ble' ? 'BLE · HW702A' : 'ANT+ · HW807';
+    row.innerHTML =
+      '<span class="dot"></span>'+
+      '<div class="info"><div class="rn"></div><div class="rd"></div></div>'+
+      '<span class="tag">'+tipoLabel+'</span>'+
+      '<button class="del" title="Remover">✕</button>';
+    row.querySelector('.rn').textContent = s.nome;
+    row.querySelector('.rd').textContent = 'ID: '+s.deviceId+' · '+s.idade+' anos';
+    row.querySelector('.del').addEventListener('click', () => { removeStudent(s.deviceId); renderDeviceList(); });
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('bleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nome = document.getElementById('bleNome').value.trim();
+  const idade = parseInt(document.getElementById('bleIdade').value, 10);
+  if (!nome || !idade) return;
+  const btn = document.getElementById('bleBtn');
+  btn.disabled = true; btn.textContent = 'Aguardando seleção do dispositivo...';
+  try{
+    const s = await pairBLE(nome, idade);
+    if (s){
+      toast('✅','<b>'+nome+'</b> pareado via Bluetooth','Cadastro');
+      e.target.reset();
+      renderDeviceList();
+    }
+  }catch(err){
+    if (err && err.name !== 'NotFoundError') alert('Não foi possível parear: '+err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = '📡 Parear via Bluetooth';
+  }
+});
+
+document.getElementById('antForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const nome = document.getElementById('antNome').value.trim();
+  const idade = parseInt(document.getElementById('antIdade').value, 10);
+  const deviceId = document.getElementById('antId').value.trim();
+  if (!nome || !idade || !deviceId) return;
+  if (students.has(deviceId)){ alert('Já existe um dispositivo cadastrado com esse ID.'); return; }
+  const s = registerStudent({ deviceId, nome, idade, tipo:'ant' });
+  buildCard(s);
+  saveRoster();
+  layoutGrid();
+  renderDeviceList();
+  toast('✅','<b>'+nome+'</b> cadastrado — aguardando sinal ANT+','Cadastro');
+  e.target.reset();
+});
+
+document.getElementById('demoBtn').addEventListener('click', () => {
+  toggleDemo(!demoActive);
+  document.getElementById('demoBtn').textContent = demoActive
+    ? '⏹ Desativar demonstração' : '🎬 Ativar demonstração (8 alunos)';
+});
+
+/* ---------------- Boot ---------------- */
+document.getElementById('className').textContent = CONFIG.className;
+loadRoster().forEach(r => buildCard(registerStudent(r)));
+buildSummary();
+layoutGrid();
+connectWS();
+setInterval(render, 1000);
+setInterval(tickClock, 1000);
+render(); tickClock();
+</script>
+</body>
+</html>
