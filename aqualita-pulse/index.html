@@ -392,8 +392,8 @@ footer{flex:0 0 7.2vh;display:flex;gap:.8vw}
       </div>
 
       <div>
-        <div class="section-title">💍 Anel inteligente (R99 e similares) — modo tempo real</div>
-        <p class="hint">Anéis como o R99 respondem ao Serviço padrão de FC (0x180D), mas só com leituras periódicas — é por isso que ele conectou, porém atualiza de tempos em tempos. Para ativar o mesmo streaming contínuo que o app do anel liga no "modo corrida", esse painel fala diretamente com o serviço proprietário do anel (achado por engenharia reversa da família de anéis Colmi R02/R06/R09/R10, que usa o mesmo chip de referência de boa parte dos anéis baratos, incluindo clones vendidos como R99). Escolha o anel na lista do navegador — pode aparecer com um nome genérico.</p>
+        <div class="section-title">💍 Anel inteligente (app SmartHealth) — modo tempo real</div>
+        <p class="hint">Anéis pareados pelo app <b>SmartHealth</b> (TK5, R10M/LittleMeatball, alguns Colmi vendidos com SmartHealth em vez de QRing) respondem ao Serviço padrão de FC (0x180D) só com uma leitura em cache — por isso conecta, mas trava num valor só. O tempo real de verdade sai por um serviço proprietário separado ("Yucheng YCBT"), o mesmo que o app liga no "modo corrida". Escolha o anel na lista do navegador — pode aparecer com um nome genérico.</p>
         <form class="device-form" id="ringForm">
           <div class="row">
             <input type="text" id="ringNome" placeholder="Nome do aluno" required>
@@ -401,7 +401,7 @@ footer{flex:0 0 7.2vh;display:flex;gap:.8vw}
           </div>
           <button type="submit" class="btn magenta" id="ringBtn">💍 Parear anel em tempo real</button>
         </form>
-        <p class="hint">Não funcionou? O firmware do seu anel pode variar — use "Parear via Bluetooth" acima como alternativa; ele continua funcionando, só que com leituras periódicas em vez de contínuas.</p>
+        <p class="hint">Se o seu anel pareia por outro app (ex.: QRing), esse protocolo não vai bater — use "Parear via Bluetooth" acima como alternativa; ele continua funcionando, só que com leituras periódicas em vez de contínuas.</p>
       </div>
 
       <div>
@@ -470,7 +470,6 @@ const ZONE_INDEX = Object.fromEntries(ZONES.map((z,i)=>[z.key,i]));
 
 const students = new Map();
 const bleDevices = new Map();
-const ringKeepAlives = new Map();
 const startTime = Date.now();
 let teamPwr = 0, nextMilestone = CONFIG.teamMilestone;
 let demoActive = false, demoTimer = null;
@@ -628,10 +627,6 @@ function ingest(deviceId, bpm){
 function removeStudent(deviceId){
   const s = students.get(deviceId);
   if (!s) return;
-  if (ringKeepAlives.has(deviceId)){
-    clearInterval(ringKeepAlives.get(deviceId));
-    ringKeepAlives.delete(deviceId);
-  }
   if (bleDevices.has(deviceId)){
     const dev = bleDevices.get(deviceId);
     try{ if (dev.gatt && dev.gatt.connected) dev.gatt.disconnect(); }catch(_){}
@@ -934,29 +929,57 @@ async function pairBLE(nome, idade){
 }
 
 /* ---------------- Bluetooth: anel inteligente em modo tempo real ----------------
-   Protocolo proprietario (nao e o Heart Rate Service padrao) usado pela familia
-   de aneis Colmi R02/R06/R09/R10 e por boa parte dos clones baratos vendidos sob
-   outras marcas (ex.: R99), que compartilham o mesmo chip/SDK de referencia.
-   Fonte: engenharia reversa publica em github.com/tahnok/colmi_r02_client.
-   Sem esse comando de "start", o anel so manda leituras esporadicas pelo
-   Heart Rate Service padrao (0x180D) — o mesmo que o botao de cima usa. */
-const RING_SERVICE = '6e40fff0-b5a3-f393-e0a9-e50e24dcca9e';
-const RING_RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-const RING_TX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-const RING_CMD_START_REAL_TIME = 105;
-const RING_CMD_STOP_REAL_TIME = 106;
-const RING_READING_HEART_RATE = 1;
-const RING_ACTION = { START:1, PAUSE:2, CONTINUE:3, STOP:4 };
-const RING_KEEPALIVE_MS = 4000;
+   Protocolo proprietario "Yucheng YCBT" (servico be940), usado pelo app
+   SmartHealth (aneis TK5, R10M/LittleMeatball e alguns Colmi vendidos com
+   SmartHealth em vez de QRing). O Heart Rate Service padrao (0x180D) nesses
+   aneis so devolve uma leitura em cache (ex.: ~87 bpm parado, mesmo fora do
+   dedo) — por isso trava num valor; o tempo real so sai por esse stream
+   proprietario, do mesmo jeito que o app oficial faz ao ligar o "modo corrida".
+   Fonte: documentacao publica do projeto PulseLoop
+   (github.com/saksham2001/PulseLoopIOS/blob/main/docs/hardware/tk5.md e r10m.md),
+   que reverteu esse protocolo a partir do SDK do fabricante e validou em
+   hardware real (R10M, Colmi R09). O deslocamento exato do bpm dentro do
+   payload do frame de stream não veio documentado byte a byte — fica marcado
+   abaixo onde a suposição entra. */
+const RING_SERVICE = 'be940000-7333-be46-b7ae-689e71722bd5';
+const RING_CMD_CHAR = 'be940001-7333-be46-b7ae-689e71722bd5';    // write + indicate (comandos e acks)
+const RING_STREAM_CHAR = 'be940003-7333-be46-b7ae-689e71722bd5'; // indicate (vitais ao vivo + historico)
 
-function ringPacket(command, subData){
-  const packet = new Uint8Array(16);
-  packet[0] = command;
-  if (subData) subData.forEach((b,i)=>{ packet[1+i] = b; });
-  let sum = 0;
-  for (let i=0;i<15;i++) sum += packet[i];
-  packet[15] = sum & 255;
-  return packet;
+function ringCrc16CcittFalse(bytes){
+  let crc = 0xFFFF;
+  for (let i=0;i<bytes.length;i++){
+    crc ^= (bytes[i] << 8);
+    for (let b=0;b<8;b++){
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc;
+}
+function ringFrame(type, cmd, payload){
+  payload = payload || [];
+  const len = 4 + payload.length + 2; // [type][cmd][len:2] + payload + [crc:2]
+  const head = [type, cmd, len & 0xFF, (len >> 8) & 0xFF, ...payload];
+  const crc = ringCrc16CcittFalse(head);
+  return new Uint8Array([...head, crc & 0xFF, (crc >> 8) & 0xFF]);
+}
+async function ringWrite(char, bytes){
+  try{ await char.writeValueWithoutResponse(bytes); }
+  catch(_){ await char.writeValue(bytes); }
+}
+// remonta frames que chegam fatiados em varias notificacoes (MTU-3 por pacote)
+function makeRingFrameReader(onFrame){
+  let buf = new Uint8Array(0);
+  return function push(chunk){
+    const merged = new Uint8Array(buf.length + chunk.length);
+    merged.set(buf); merged.set(chunk, buf.length);
+    buf = merged;
+    while (buf.length >= 4){
+      const len = buf[2] | (buf[3] << 8);
+      if (len < 4 || buf.length < len) break;
+      onFrame(buf.slice(0, len));
+      buf = buf.slice(len);
+    }
+  };
 }
 
 async function pairRing(nome, idade){
@@ -981,28 +1004,28 @@ async function pairRing(nome, idade){
       (found.length ? ' Serviços encontrados: '+found.join(', ')+'.' : ' Nenhum outro serviço acessível encontrado.');
     throw err;
   }
-  const rxChar = await service.getCharacteristic(RING_RX_CHAR);
-  const txChar = await service.getCharacteristic(RING_TX_CHAR);
+  const cmdChar = await service.getCharacteristic(RING_CMD_CHAR);
+  const streamChar = await service.getCharacteristic(RING_STREAM_CHAR);
 
-  await txChar.startNotifications();
-  txChar.addEventListener('characteristicvaluechanged', e => {
-    const v = e.target.value;
-    if (v.getUint8(0) === RING_CMD_START_REAL_TIME && v.getUint8(1) === RING_READING_HEART_RATE){
-      const errorCode = v.getUint8(2);
-      const bpm = v.getUint8(3);
-      if (errorCode === 0 && bpm > 0) ingest(deviceId, bpm);
+  // as duas indicacoes precisam estar ligadas antes de mandar qualquer comando
+  await cmdChar.startNotifications();
+  await streamChar.startNotifications();
+
+  const readStream = makeRingFrameReader(frame => {
+    const type = frame[0], cmd = frame[1];
+    if (type === 0x06 && cmd === 0x01){
+      const payload = frame.slice(4, frame.length - 2);
+      const bpm = payload[0]; // suposicao: bpm no 1o byte do payload, nao confirmado byte a byte
+      if (bpm > 0 && bpm < 250) ingest(deviceId, bpm);
     }
   });
+  streamChar.addEventListener('characteristicvaluechanged', e => {
+    readStream(new Uint8Array(e.target.value.buffer, e.target.value.byteOffset, e.target.value.byteLength));
+  });
 
-  await rxChar.writeValueWithoutResponse(ringPacket(RING_CMD_START_REAL_TIME, [RING_READING_HEART_RATE, RING_ACTION.START]));
-  const keepAlive = setInterval(() => {
-    rxChar.writeValueWithoutResponse(ringPacket(RING_CMD_START_REAL_TIME, [RING_READING_HEART_RATE, RING_ACTION.CONTINUE])).catch(()=>{});
-  }, RING_KEEPALIVE_MS);
-  ringKeepAlives.set(deviceId, keepAlive);
+  await ringWrite(cmdChar, ringFrame(0x03, 0x2f, [0x00])); // inicia leitura de FC (modo 00)
 
   device.addEventListener('gattserverdisconnected', () => {
-    clearInterval(keepAlive);
-    ringKeepAlives.delete(deviceId);
     toast('📴','<b>'+nome+'</b> perdeu a conexão Bluetooth','Aviso');
   });
   bleDevices.set(deviceId, device);

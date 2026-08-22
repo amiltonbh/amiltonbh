@@ -10,14 +10,17 @@ dispositivos direto na tela.
 - **HW807** (ANT+ puro, 2 unidades) + **RC406** (dongle ANT+ USB) — o
   navegador não acessa USB/ANT+ diretamente, então usam a ponte local em
   [`antplus-bridge/`](antplus-bridge/).
-- **Anéis inteligentes tipo R99** — também respondem ao Serviço padrão de
-  FC (mesmo botão da HW702A), mas só com leituras periódicas. Para o
+- **Anéis inteligentes pareados pelo app SmartHealth** (TK5, R10M/
+  LittleMeatball, alguns Colmi vendidos com SmartHealth em vez de QRing) —
+  também respondem ao Serviço padrão de FC (mesmo botão da HW702A), mas só
+  com uma leitura em cache (trava num valor, não atualiza). Para o
   streaming contínuo (o "modo corrida" do app do anel), use o botão
-  "💍 Parear anel em tempo real": ele fala com o serviço proprietário do
-  anel (engenharia reversa da família Colmi R02/R06/R09/R10, chip/SDK
-  compartilhado por boa parte dos anéis baratos, incluindo clones vendidos
-  como R99). Se o firmware do seu anel específico não bater com esse
-  protocolo, o pareamento padrão continua funcionando em modo periódico.
+  "💍 Parear anel em tempo real": ele fala com o serviço proprietário
+  "Yucheng YCBT" (`be940`), documentado publicamente pelo projeto
+  [PulseLoop](https://github.com/saksham2001/PulseLoopIOS/blob/main/docs/hardware/tk5.md)
+  a partir do SDK do fabricante. Se o seu anel pareia por outro app (ex.:
+  QRing), esse protocolo não bate — use o pareamento padrão em modo
+  periódico.
 
 ## Como usar
 
