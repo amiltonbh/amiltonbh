@@ -10,6 +10,14 @@ dispositivos direto na tela.
 - **HW807** (ANT+ puro, 2 unidades) + **RC406** (dongle ANT+ USB) — o
   navegador não acessa USB/ANT+ diretamente, então usam a ponte local em
   [`antplus-bridge/`](antplus-bridge/).
+- **Anéis inteligentes tipo R99** — também respondem ao Serviço padrão de
+  FC (mesmo botão da HW702A), mas só com leituras periódicas. Para o
+  streaming contínuo (o "modo corrida" do app do anel), use o botão
+  "💍 Parear anel em tempo real": ele fala com o serviço proprietário do
+  anel (engenharia reversa da família Colmi R02/R06/R09/R10, chip/SDK
+  compartilhado por boa parte dos anéis baratos, incluindo clones vendidos
+  como R99). Se o firmware do seu anel específico não bater com esse
+  protocolo, o pareamento padrão continua funcionando em modo periódico.
 
 ## Como usar
 

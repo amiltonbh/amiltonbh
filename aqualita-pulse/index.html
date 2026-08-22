@@ -392,6 +392,19 @@ footer{flex:0 0 7.2vh;display:flex;gap:.8vw}
       </div>
 
       <div>
+        <div class="section-title">💍 Anel inteligente (R99 e similares) — modo tempo real</div>
+        <p class="hint">Anéis como o R99 respondem ao Serviço padrão de FC (0x180D), mas só com leituras periódicas — é por isso que ele conectou, porém atualiza de tempos em tempos. Para ativar o mesmo streaming contínuo que o app do anel liga no "modo corrida", esse painel fala diretamente com o serviço proprietário do anel (achado por engenharia reversa da família de anéis Colmi R02/R06/R09/R10, que usa o mesmo chip de referência de boa parte dos anéis baratos, incluindo clones vendidos como R99). Escolha o anel na lista do navegador — pode aparecer com um nome genérico.</p>
+        <form class="device-form" id="ringForm">
+          <div class="row">
+            <input type="text" id="ringNome" placeholder="Nome do aluno" required>
+            <input type="number" id="ringIdade" placeholder="Idade" min="8" max="99" required>
+          </div>
+          <button type="submit" class="btn magenta" id="ringBtn">💍 Parear anel em tempo real</button>
+        </form>
+        <p class="hint">Não funcionou? O firmware do seu anel pode variar — use "Parear via Bluetooth" acima como alternativa; ele continua funcionando, só que com leituras periódicas em vez de contínuas.</p>
+      </div>
+
+      <div>
         <div class="section-title">🔌 Cadastro manual — HW807 / dongle ANT+ RC406</div>
         <p class="hint">A HW807 fala apenas ANT+ e o dongle RC406 é lido por USB, algo que o navegador não acessa diretamente. Cadastre aqui com o ID ANT+ do dispositivo (impresso na pulseira ou mostrado ao parear no coletor); os dados chegam via uma pequena ponte local que envia para <code>ws://localhost:8080</code> no formato <code>{"deviceId":"...","bpm":123}</code> — veja o script incluso na pasta <code>antplus-bridge/</code>.</p>
         <form class="device-form" id="antForm">
@@ -457,6 +470,7 @@ const ZONE_INDEX = Object.fromEntries(ZONES.map((z,i)=>[z.key,i]));
 
 const students = new Map();
 const bleDevices = new Map();
+const ringKeepAlives = new Map();
 const startTime = Date.now();
 let teamPwr = 0, nextMilestone = CONFIG.teamMilestone;
 let demoActive = false, demoTimer = null;
@@ -614,6 +628,10 @@ function ingest(deviceId, bpm){
 function removeStudent(deviceId){
   const s = students.get(deviceId);
   if (!s) return;
+  if (ringKeepAlives.has(deviceId)){
+    clearInterval(ringKeepAlives.get(deviceId));
+    ringKeepAlives.delete(deviceId);
+  }
   if (bleDevices.has(deviceId)){
     const dev = bleDevices.get(deviceId);
     try{ if (dev.gatt && dev.gatt.connected) dev.gatt.disconnect(); }catch(_){}
@@ -915,6 +933,76 @@ async function pairBLE(nome, idade){
   return s;
 }
 
+/* ---------------- Bluetooth: anel inteligente em modo tempo real ----------------
+   Protocolo proprietario (nao e o Heart Rate Service padrao) usado pela familia
+   de aneis Colmi R02/R06/R09/R10 e por boa parte dos clones baratos vendidos sob
+   outras marcas (ex.: R99), que compartilham o mesmo chip/SDK de referencia.
+   Fonte: engenharia reversa publica em github.com/tahnok/colmi_r02_client.
+   Sem esse comando de "start", o anel so manda leituras esporadicas pelo
+   Heart Rate Service padrao (0x180D) — o mesmo que o botao de cima usa. */
+const RING_SERVICE = '6e40fff0-b5a3-f393-e0a9-e50e24dcca9e';
+const RING_RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const RING_TX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const RING_CMD_START_REAL_TIME = 105;
+const RING_CMD_STOP_REAL_TIME = 106;
+const RING_READING_HEART_RATE = 1;
+const RING_ACTION = { START:1, PAUSE:2, CONTINUE:3, STOP:4 };
+const RING_KEEPALIVE_MS = 4000;
+
+function ringPacket(command, subData){
+  const packet = new Uint8Array(16);
+  packet[0] = command;
+  if (subData) subData.forEach((b,i)=>{ packet[1+i] = b; });
+  let sum = 0;
+  for (let i=0;i<15;i++) sum += packet[i];
+  packet[15] = sum & 255;
+  return packet;
+}
+
+async function pairRing(nome, idade){
+  if (!navigator.bluetooth){
+    alert('Este navegador não suporta Web Bluetooth. Use Chrome ou Edge no Mac.');
+    return null;
+  }
+  const device = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [RING_SERVICE, 'heart_rate', 'battery_service']
+  });
+  const deviceId = 'ring-' + device.id;
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService(RING_SERVICE);
+  const rxChar = await service.getCharacteristic(RING_RX_CHAR);
+  const txChar = await service.getCharacteristic(RING_TX_CHAR);
+
+  await txChar.startNotifications();
+  txChar.addEventListener('characteristicvaluechanged', e => {
+    const v = e.target.value;
+    if (v.getUint8(0) === RING_CMD_START_REAL_TIME && v.getUint8(1) === RING_READING_HEART_RATE){
+      const errorCode = v.getUint8(2);
+      const bpm = v.getUint8(3);
+      if (errorCode === 0 && bpm > 0) ingest(deviceId, bpm);
+    }
+  });
+
+  await rxChar.writeValueWithoutResponse(ringPacket(RING_CMD_START_REAL_TIME, [RING_READING_HEART_RATE, RING_ACTION.START]));
+  const keepAlive = setInterval(() => {
+    rxChar.writeValueWithoutResponse(ringPacket(RING_CMD_START_REAL_TIME, [RING_READING_HEART_RATE, RING_ACTION.CONTINUE])).catch(()=>{});
+  }, RING_KEEPALIVE_MS);
+  ringKeepAlives.set(deviceId, keepAlive);
+
+  device.addEventListener('gattserverdisconnected', () => {
+    clearInterval(keepAlive);
+    ringKeepAlives.delete(deviceId);
+    toast('📴','<b>'+nome+'</b> perdeu a conexão Bluetooth','Aviso');
+  });
+  bleDevices.set(deviceId, device);
+  const s = registerStudent({ deviceId, nome, idade, tipo:'ring' });
+  buildCard(s);
+  saveRoster();
+  layoutGrid();
+  return s;
+}
+
 /* ---------------- Modal de cadastro ---------------- */
 const modalOverlay = document.getElementById('modalOverlay');
 function openModal(){ modalOverlay.classList.add('open'); renderDeviceList(); }
@@ -934,7 +1022,10 @@ function renderDeviceList(){
     const online = s.lastSeen && (now - s.lastSeen) <= CONFIG.offlineAfterMs;
     const row = document.createElement('div');
     row.className = 'device-row ' + (online ? 'online' : (s.lastSeen ? '' : 'waiting'));
-    const tipoLabel = s.tipo === 'ble' ? 'BLE · HW702A' : 'ANT+ · HW807';
+    const tipoLabel = s.tipo === 'ble' ? 'BLE · HW702A'
+      : s.tipo === 'ring' ? 'BLE tempo real · Anel'
+      : s.tipo === 'demo' ? 'Demonstração'
+      : 'ANT+ · HW807';
     row.innerHTML =
       '<span class="dot"></span>'+
       '<div class="info"><div class="rn"></div><div class="rd"></div></div>'+
@@ -965,6 +1056,29 @@ document.getElementById('bleForm').addEventListener('submit', async e => {
     if (err && err.name !== 'NotFoundError') alert('Não foi possível parear: '+err.message);
   }finally{
     btn.disabled = false; btn.textContent = '📡 Parear via Bluetooth';
+  }
+});
+
+document.getElementById('ringForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nome = document.getElementById('ringNome').value.trim();
+  const idade = parseInt(document.getElementById('ringIdade').value, 10);
+  if (!nome || !idade) return;
+  const btn = document.getElementById('ringBtn');
+  btn.disabled = true; btn.textContent = 'Aguardando seleção do anel...';
+  try{
+    const s = await pairRing(nome, idade);
+    if (s){
+      toast('✅','<b>'+nome+'</b> pareado em modo tempo real','Cadastro');
+      e.target.reset();
+      renderDeviceList();
+    }
+  }catch(err){
+    if (err && err.name !== 'NotFoundError'){
+      alert('Não foi possível ativar o modo tempo real neste anel: '+err.message+'\n\nUse "Parear via Bluetooth" (HW702A) como alternativa — funciona com leituras periódicas.');
+    }
+  }finally{
+    btn.disabled = false; btn.textContent = '💍 Parear anel em tempo real';
   }
 });
 
