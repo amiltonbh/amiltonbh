@@ -970,7 +970,17 @@ async function pairRing(nome, idade){
   });
   const deviceId = 'ring-' + device.id;
   const server = await device.gatt.connect();
-  const service = await server.getPrimaryService(RING_SERVICE);
+
+  let service;
+  try{
+    service = await server.getPrimaryService(RING_SERVICE);
+  }catch(err){
+    let found = [];
+    try{ found = (await server.getPrimaryServices()).map(s=>s.uuid); }catch(_){}
+    err.message = 'Serviço '+RING_SERVICE+' não encontrado neste anel.'+
+      (found.length ? ' Serviços encontrados: '+found.join(', ')+'.' : ' Nenhum outro serviço acessível encontrado.');
+    throw err;
+  }
   const rxChar = await service.getCharacteristic(RING_RX_CHAR);
   const txChar = await service.getCharacteristic(RING_TX_CHAR);
 
@@ -1074,8 +1084,19 @@ document.getElementById('ringForm').addEventListener('submit', async e => {
       renderDeviceList();
     }
   }catch(err){
-    if (err && err.name !== 'NotFoundError'){
-      alert('Não foi possível ativar o modo tempo real neste anel: '+err.message+'\n\nUse "Parear via Bluetooth" (HW702A) como alternativa — funciona com leituras periódicas.');
+    const userCancelled = err && err.name === 'NotFoundError' && /cancel/i.test(err.message || '');
+    if (!userCancelled){
+      console.error('[aqualita-pulse] falha ao parear anel em modo tempo real:', err);
+      alert(
+        'Não foi possível ativar o modo tempo real neste anel.\n\n'+
+        'Erro: '+(err && err.message ? err.message : err)+'\n\n'+
+        'Isso normalmente significa que esse anel usa um protocolo proprietário '+
+        'diferente do padrão Colmi assumido aqui. Use "Parear via Bluetooth" '+
+        '(HW702A) como alternativa — funciona com leituras periódicas. Se quiser '+
+        'o tempo real funcionando neste anel específico, abra o app nRF Connect '+
+        '(grátis, iOS/Android), pareie com o anel e veja o UUID do serviço/'+
+        'características customizadas para me repassar.'
+      );
     }
   }finally{
     btn.disabled = false; btn.textContent = '💍 Parear anel em tempo real';
